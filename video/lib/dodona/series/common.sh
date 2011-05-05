@@ -30,7 +30,7 @@ dodona.user.postFinal() {
     dodona.user.series.writeStates "${D_SERIES_CHOICE_STACK[0]}"  "$1" &&
     echo "Playing ${D_SERIES_CHOICE_STACK[0]} (score: ${D_SERIES_SCORE_STACK[0]})" &&
     mplayer -use-filedir-conf "${D_SERIES_CHOICE_STACK[0]}" &&
-    mv "${D_SERIES_CHOICE_STACK[0]}" "$D_SERIES_ARCHIVE"
+    mv "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE"
   else
     echo "${D_SERIES_CHOICE_STACK[0]} is not a file."
   fi
