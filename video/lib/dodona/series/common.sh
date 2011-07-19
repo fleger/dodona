@@ -50,11 +50,11 @@ dodona.user.preFinal() {
 
 dodona.user.postFinal() {
   if [[ -f "${D_SERIES_CHOICE_STACK[0]}" ]]; then
-    dodona.user.series.writeStates "${D_SERIES_CHOICE_STACK[0]}"  "$1" &&
-    echo "Playing ${D_SERIES_CHOICE_STACK[0]} (score: ${D_SERIES_SCORE_STACK[0]})" #&&
-    #mplayer -use-filedir-conf "${D_SERIES_CHOICE_STACK[0]}" &&
-    #mv "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE"
+    echo "Playing ${D_SERIES_CHOICE_STACK[0]} (score: ${D_SERIES_SCORE_STACK[0]})" &&
+    mplayer -use-filedir-conf "${D_SERIES_CHOICE_STACK[0]}" &&
+    mv "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE" && 
+    dodona.user.series.writeStates "${D_SERIES_CHOICE_STACK[0]}"  "$1"
   else
-    echo "${D_SERIES_CHOICE_STACK[0]} is not a file."
+    echo "'${D_SERIES_CHOICE_STACK[0]}' is not a file."
   fi
 }
