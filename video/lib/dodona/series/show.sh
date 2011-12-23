@@ -19,8 +19,10 @@ dodona.user.preChildren() {
   # Put the current season in D_SERIES_CURRENT_SEASON
   if [[ -f "$D_SERIES_PERSIST" ]]; then
     D_SERIES_CURRENT_SEASON="$(cat $D_SERIES_PERSIST)"
+    echo "[Show] Current Season: $D_SERIES_CURRENT_SEASON"  
   else
     D_SERIES_CURRENT_SEASON=""
+    echo "[Show] New show."
   fi
   # Flag indicating that the child that has been treated is the next season
   D_SERIES_IS_NEXT_SEASON=false
@@ -52,23 +54,25 @@ dodona.user.postChild() {
   local episodeName=${D_SERIES_CHOICE_STACK[0]}
   D_SERIES_CHOICE_STACK=("${D_SERIES_CHOICE_STACK[@]:1}")
 
+  echo "[Show] Testing Season: $D_SERIES_SEASON"
   # Apply modifiers to score
   # Case: weigh the season immediately following the current registered one
   $D_SERIES_IS_NEXT_SEASON &&
+  echo "[Show] Next Season" &&
   score=$(( score * $D_SERIES_SCORE_NEXT_SEASON )) &&
   D_SERIES_IS_NEXT_SEASON=false
 
   # Case: weigh the current registered season
   # If we have ran out of episodes, score should be D_SERIES_SCORE_EXHAUSTED (0)
   [ "x$D_SERIES_SEASON" = "x$D_SERIES_CURRENT_SEASON" ] &&
+  echo "[Show] Current Season" &&
   score=$(( score * $D_SERIES_SCORE_CURRENT_SEASON )) &&
   D_SERIES_IS_NEXT_SEASON=true
 
+  echo "[Show] $episodeName: $score"
   # Update best score
   (( $score > $D_SERIES_BEST_SEASON_SCORE )) &&
   D_SERIES_BEST_SEASON_SCORE=$score &&
   D_SERIES_BEST_SEASON_CHOICE=$episodeName
 }
-
-
 
