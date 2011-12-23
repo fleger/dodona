@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# Helper functions
+
 # ASCII QuickSort (removes repeated values)
 dodona.user.series.quicksort() {
   local -a array=("$@")
@@ -22,6 +24,37 @@ dodona.user.series.quicksort() {
   fi
 }
 
+# Get autocrop parameters
+dodona.user.series.getCropParam() {
+  local totalLoops=10
+  local i
+  local timeStep=30
+  local frames=20
+  local cropDetectParams=30:2
+
+  local -a coord=()
+  local line=""
+  local x1=99999999999
+  local x2=0
+  local y1=99999999999
+  local y2=0
+
+  while read line; do
+    coord=($line)
+    [ ${coord[0]} -lt $x1 ] && x1=${coord[0]}
+    [ ${coord[1]} -gt $x2 ] && x2=${coord[1]}
+    [ ${coord[2]} -lt $y1 ] && y1=${coord[2]}
+    [ ${coord[3]} -gt $y2 ] && y2=${coord[3]}
+  done < <(
+    for i in $(seq $totalLoops); do
+      mplayer "$1" -speed 100 -ss "$(( $timeStep * $i ))" -frames $frames -vo null -nosound -nocache -vf cropdetect=$cropDetectParams 2> /dev/null
+    done | sed -r -n -e 's/^\[CROP\].+X: ([0-9]+)\.\.([0-9]+).+Y: ([0-9]+)\.\.([0-9]+).*$/\1 \2 \3 \4/p'
+  )
+  echo $(($x2 - $x1 + 1)):$(($y2 - $y1 + 1)):$x1:$y1
+}
+
+
+
 # Recursive persistant state writer
 dodona.user.series.writeStates() {
   if [ "x$1" = "x/" ] || [ "x$1" = "x." ] || [ "x$1" = "x$2" ]; then
@@ -31,6 +64,8 @@ dodona.user.series.writeStates() {
     dodona.user.series.writeStates "$(dirname $1)" "$2"
   fi
 }
+
+# Global series dodona hooks
 
 # Set up some variables and constants
 dodona.user.preFinal() {
@@ -48,11 +83,12 @@ dodona.user.preFinal() {
   D_SERIES_SCORE_STACK=(1)
 }
 
+# Play the file & move to archive
 dodona.user.postFinal() {
   if [[ -f "${D_SERIES_CHOICE_STACK[0]}" ]]; then
     echo "Playing ${D_SERIES_CHOICE_STACK[0]} (score: ${D_SERIES_SCORE_STACK[0]})" &&
-    mplayer -use-filedir-conf "${D_SERIES_CHOICE_STACK[0]}" &&
-    mv "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE" && 
+    mplayer -use-filedir-conf -vf-pre crop=$(dodona.user.series.getCropParam "${D_SERIES_CHOICE_STACK[0]}") "${D_SERIES_CHOICE_STACK[0]}" &&
+    kde-mv "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE" && 
     dodona.user.series.writeStates "${D_SERIES_CHOICE_STACK[0]}"  "$1"
   else
     echo "'${D_SERIES_CHOICE_STACK[0]}' is not a file."
