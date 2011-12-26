@@ -53,7 +53,15 @@ dodona.user.series.getCropParam() {
   echo $(($x2 - $x1 + 1)):$(($y2 - $y1 + 1)):$x1:$y1
 }
 
-
+# Apply trs files to subtitles
+dodona.users.series.resync() {
+  for i in "${D_SERIES_CHOICE_STACK[0]%.*}"*.trs; do
+    [ -f "${i}" ] &&
+    [ -f "${i%.trs}" ] &&
+    liveresync-apply "${i}" "${i%.trs}" &&
+    rm "${i}"
+  done
+}
 
 # Recursive persistant state writer
 dodona.user.series.writeStates() {
@@ -81,14 +89,31 @@ dodona.user.preFinal() {
 
   D_SERIES_CHOICE_STACK=("")
   D_SERIES_SCORE_STACK=(1)
+
+  D_SERIES_PLAYER="mplayer"
+  D_SERIES_MV="kde-mv"
+  
+  # Parse arguments
+  local opt
+  local OPTIND=1
+  local OPTARG
+  
+  while getopts r opt "${dodona_ARGS[@]}"; do
+    case "$opt" in
+      r)  D_SERIES_PLAYER="liveresync-player";;
+    esac
+  done
 }
 
 # Play the file & move to archive
 dodona.user.postFinal() {
+  local i
   if [[ -f "${D_SERIES_CHOICE_STACK[0]}" ]]; then
     echo "Playing ${D_SERIES_CHOICE_STACK[0]} (score: ${D_SERIES_SCORE_STACK[0]})" &&
-    mplayer -use-filedir-conf -vf-pre crop=$(dodona.user.series.getCropParam "${D_SERIES_CHOICE_STACK[0]}") "${D_SERIES_CHOICE_STACK[0]}" &&
-    kde-mv "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE" && 
+    dodona.users.series.resync &&
+    "$D_SERIES_PLAYER" -use-filedir-conf -vf-pre crop=$(dodona.user.series.getCropParam "${D_SERIES_CHOICE_STACK[0]}") "${D_SERIES_CHOICE_STACK[0]}" &&
+    dodona.users.series.resync &&
+    "$D_SERIES_MV" "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE" &&
     dodona.user.series.writeStates "${D_SERIES_CHOICE_STACK[0]}"  "$1"
   else
     echo "'${D_SERIES_CHOICE_STACK[0]}' is not a file."
