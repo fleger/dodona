@@ -92,15 +92,20 @@ dodona.user.preFinal() {
 
   D_SERIES_PLAYER="mplayer"
   D_SERIES_MV="kde-mv"
-  
+  D_SERIES_DO_MV=true
+  D_SERIES_PLAYER_ARGS=(-use-filedir-conf)
+
   # Parse arguments
   local opt
   local OPTIND=1
   local OPTARG
-  
-  while getopts r opt "${dodona_ARGS[@]}"; do
+
+  while getopts rnwf opt "${dodona_ARGS[@]}"; do
     case "$opt" in
       r)  D_SERIES_PLAYER="liveresync-player";;
+      n)  D_SERIES_DO_MV=false;;
+      w)  D_SERIES_PLAYER_ARGS+=(-aspect 16:9);;
+      f)  D_SERIES_PLAYER_ARGS+=(-aspect 4:3);;
     esac
   done
 }
@@ -111,9 +116,13 @@ dodona.user.postFinal() {
   if [[ -f "${D_SERIES_CHOICE_STACK[0]}" ]]; then
     echo "Playing ${D_SERIES_CHOICE_STACK[0]} (score: ${D_SERIES_SCORE_STACK[0]})" &&
     dodona.users.series.resync &&
-    "$D_SERIES_PLAYER" -use-filedir-conf -vf-pre crop=$(dodona.user.series.getCropParam "${D_SERIES_CHOICE_STACK[0]}") "${D_SERIES_CHOICE_STACK[0]}" &&
-    dodona.users.series.resync &&
-    "$D_SERIES_MV" "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE" &&
+    #"$D_SERIES_PLAYER" -use-filedir-conf -vf-pre crop=$(dodona.user.series.getCropParam "${D_SERIES_CHOICE_STACK[0]}") "${D_SERIES_CHOICE_STACK[0]}" &&
+    "$D_SERIES_PLAYER" "${D_SERIES_PLAYER_ARGS[@]}" "${D_SERIES_CHOICE_STACK[0]}" &&
+    dodona.users.series.resync && {
+      if "$D_SERIES_DO_MV"; then
+        "$D_SERIES_MV" "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE"
+      fi
+    } &&
     dodona.user.series.writeStates "${D_SERIES_CHOICE_STACK[0]}"  "$1"
   else
     echo "'${D_SERIES_CHOICE_STACK[0]}' is not a file."
