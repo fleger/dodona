@@ -53,16 +53,6 @@ dodona.user.series.getCropParam() {
   echo $(($x2 - $x1 + 1)):$(($y2 - $y1 + 1)):$x1:$y1
 }
 
-# Apply trs files to subtitles
-dodona.users.series.resync() {
-  for i in "${D_SERIES_CHOICE_STACK[0]%.*}"*.trs; do
-    [ -f "${i}" ] &&
-    [ -f "${i%.trs}" ] &&
-    liveresync-apply "${i}" "${i%.trs}" &&
-    rm "${i}"
-  done
-}
-
 # Recursive persistant state writer
 dodona.user.series.writeStates() {
   if [ "x$1" = "x/" ] || [ "x$1" = "x." ] || [ "x$1" = "x$2" ]; then
@@ -102,7 +92,9 @@ dodona.user.preFinal() {
 
   while getopts rnwf opt "${dodona_ARGS[@]}"; do
     case "$opt" in
-      r)  D_SERIES_PLAYER="liveresync-player";;
+      r)  D_SERIES_PLAYER="liveresync"
+          D_SERIES_PLAYER_ARGS=(play "${D_SERIES_PLAYER_ARGS[@]}")
+          ;;
       n)  D_SERIES_DO_MV=false;;
       w)  D_SERIES_PLAYER_ARGS+=(-aspect 16:9);;
       f)  D_SERIES_PLAYER_ARGS+=(-aspect 4:3);;
@@ -115,10 +107,8 @@ dodona.user.postFinal() {
   local i
   if [[ -f "${D_SERIES_CHOICE_STACK[0]}" ]]; then
     echo "Playing ${D_SERIES_CHOICE_STACK[0]} (score: ${D_SERIES_SCORE_STACK[0]})" &&
-    dodona.users.series.resync &&
     #"$D_SERIES_PLAYER" -use-filedir-conf -vf-pre crop=$(dodona.user.series.getCropParam "${D_SERIES_CHOICE_STACK[0]}") "${D_SERIES_CHOICE_STACK[0]}" &&
-    "$D_SERIES_PLAYER" "${D_SERIES_PLAYER_ARGS[@]}" "${D_SERIES_CHOICE_STACK[0]}" &&
-    dodona.users.series.resync && {
+    "$D_SERIES_PLAYER" "${D_SERIES_PLAYER_ARGS[@]}" "${D_SERIES_CHOICE_STACK[0]}" && {
       if "$D_SERIES_DO_MV"; then
         "$D_SERIES_MV" "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE"
       fi
