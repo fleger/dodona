@@ -92,7 +92,7 @@ dodona.user.preFinal() {
 
   while getopts rnwf opt "${dodona_ARGS[@]}"; do
     case "$opt" in
-      r)  D_SERIES_PLAYER="liveresync"
+      r)  D_SERIES_PLAYER="msubresync"
           D_SERIES_PLAYER_ARGS=(play "${D_SERIES_PLAYER_ARGS[@]}")
           ;;
       n)  D_SERIES_DO_MV=false;;
