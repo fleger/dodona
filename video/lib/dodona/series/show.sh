@@ -18,8 +18,8 @@ dodona.user.preChildren() {
   # Try to load the show state file
   # Put the current season in D_SERIES_CURRENT_SEASON
   if [[ -f "$D_SERIES_PERSIST" ]]; then
-    D_SERIES_CURRENT_SEASON="$(cat $D_SERIES_PERSIST)"
-    echo "[Show] Current Season: $D_SERIES_CURRENT_SEASON"  
+    D_SERIES_CURRENT_SEASON="$(cat "$D_SERIES_PERSIST")"
+    echo "[Show] Current Season: $D_SERIES_CURRENT_SEASON"
   else
     D_SERIES_CURRENT_SEASON=""
     echo "[Show] New show."

@@ -58,8 +58,8 @@ dodona.user.series.writeStates() {
   if [ "x$1" = "x/" ] || [ "x$1" = "x." ] || [ "x$1" = "x$2" ]; then
     return
   else
-    echo "$(basename $1)" > "$(dirname $1)/$D_SERIES_PERSIST"
-    dodona.user.series.writeStates "$(dirname $1)" "$2"
+    echo "$(basename "$1")" > "$(dirname "$1")/$D_SERIES_PERSIST"
+    dodona.user.series.writeStates "$(dirname "$1")" "$2"
   fi
 }
 

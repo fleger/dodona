@@ -11,7 +11,7 @@ dodona.user.postChildren() {
   flag=false
   cd "$1"
   if [ -f "$1/$D_SERIES_PERSIST" ]; then
-    lastItem="$(cat $1/$D_SERIES_PERSIST)"
+    lastItem="$(cat "$1/$D_SERIES_PERSIST")"
     # FIXME: if lastFile is missing, it wont work
     # Try inserting lastFile at the end of the ls then sort then uniq
     for f in $(dodona.user.series.quicksort "$lastItem" ${D_SERIES_VIDEO_PATTERNS[@]}); do
@@ -40,5 +40,5 @@ dodona.user.postChild() {
 }
 
 dodona.user.preChildren() {
-  D_SERIES_SEASON=$(basename "$1")
+  D_SERIES_SEASON="$(basename "$1")"
 }
