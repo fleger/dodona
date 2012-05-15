@@ -80,21 +80,18 @@ dodona.user.preFinal() {
   D_SERIES_CHOICE_STACK=("")
   D_SERIES_SCORE_STACK=(1)
 
-  D_SERIES_PLAYER="mplayer"
+  D_SERIES_PLAYER="msubresync"
   D_SERIES_MV="kde-mv"
   D_SERIES_DO_MV=true
-  D_SERIES_PLAYER_ARGS=(-use-filedir-conf)
+  D_SERIES_PLAYER_ARGS=(play -use-filedir-conf)
 
   # Parse arguments
   local opt
   local OPTIND=1
   local OPTARG
 
-  while getopts rnwf opt "${dodona_ARGS[@]}"; do
+  while getopts nwf opt "${dodona_ARGS[@]}"; do
     case "$opt" in
-      r)  D_SERIES_PLAYER="msubresync"
-          D_SERIES_PLAYER_ARGS=(play "${D_SERIES_PLAYER_ARGS[@]}")
-          ;;
       n)  D_SERIES_DO_MV=false;;
       w)  D_SERIES_PLAYER_ARGS+=(-aspect 16:9);;
       f)  D_SERIES_PLAYER_ARGS+=(-aspect 4:3);;
