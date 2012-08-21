@@ -24,6 +24,20 @@ dodona.user.series.quicksort() {
   fi
 }
 
+dodona.user.series.properUpmix() {
+  local -i nbChannels=0
+  local line
+  local -r matcher='^ID_AUDIO_NCH=([0-9]+)$'
+  while read line; do
+    [[ "$line" =~ $matcher ]] && nbChannels="${BASH_REMATCH[1]}"
+  done < <(mplayer -nocache -ao null -vo null -frames 1 -identify "$1")
+  case "$nbChannels" in
+    2) D_SERIES_PLAYER_ARGS+=(-ao alsa:device=upmix_20to51);;
+    3) D_SERIES_PLAYER_ARGS+=(-ao alsa:device=upmix_21to51);;
+    *) ;;
+  esac
+}
+
 # Get autocrop parameters
 dodona.user.series.getCropParam() {
   local totalLoops=10
@@ -47,7 +61,7 @@ dodona.user.series.getCropParam() {
     [ ${coord[3]} -gt $y2 ] && y2=${coord[3]}
   done < <(
     for i in $(seq $totalLoops); do
-      mplayer "$1" -speed 100 -ss "$(( $timeStep * $i ))" -frames $frames -vo null -nosound -nocache -vf cropdetect=$cropDetectParams 2> /dev/null
+      LANG=C mplayer "$1" -speed 100 -ss "$(( $timeStep * $i ))" -frames $frames -vo null -nosound -nocache -vf cropdetect=$cropDetectParams 2> /dev/null
     done | sed -r -n -e 's/^\[CROP\].+X: ([0-9]+)\.\.([0-9]+).+Y: ([0-9]+)\.\.([0-9]+).*$/\1 \2 \3 \4/p'
   )
   echo $(($x2 - $x1 + 1)):$(($y2 - $y1 + 1)):$x1:$y1
@@ -61,6 +75,10 @@ dodona.user.series.writeStates() {
     echo "$(basename "$1")" > "$(dirname "$1")/$D_SERIES_PERSIST"
     dodona.user.series.writeStates "$(dirname "$1")" "$2"
   fi
+}
+
+dodona.user.series.noOp() {
+  true
 }
 
 # Global series dodona hooks
@@ -90,8 +108,9 @@ dodona.user.preFinal() {
   local OPTIND=1
   local OPTARG
 
-  while getopts nwf opt "${dodona_ARGS[@]}"; do
+  while getopts dnwf opt "${dodona_ARGS[@]}"; do
     case "$opt" in
+      d)  D_SERIES_PLAYER=dodona.user.series.noOp;;
       n)  D_SERIES_DO_MV=false;;
       w)  D_SERIES_PLAYER_ARGS+=(-aspect 16:9);;
       f)  D_SERIES_PLAYER_ARGS+=(-aspect 4:3);;
@@ -99,13 +118,17 @@ dodona.user.preFinal() {
   done
 }
 
+
+
 # Play the file & move to archive
 dodona.user.postFinal() {
   local i
   if [[ -f "${D_SERIES_CHOICE_STACK[0]}" ]]; then
     echo "Playing ${D_SERIES_CHOICE_STACK[0]} (score: ${D_SERIES_SCORE_STACK[0]})" &&
     #"$D_SERIES_PLAYER" -use-filedir-conf -vf-pre crop=$(dodona.user.series.getCropParam "${D_SERIES_CHOICE_STACK[0]}") "${D_SERIES_CHOICE_STACK[0]}" &&
-    "$D_SERIES_PLAYER" "${D_SERIES_PLAYER_ARGS[@]}" "${D_SERIES_CHOICE_STACK[0]}" && {
+   dodona.user.series.properUpmix "${D_SERIES_CHOICE_STACK[0]}"
+   echo "Running $D_SERIES_PLAYER ${D_SERIES_PLAYER_ARGS[@]} ${D_SERIES_CHOICE_STACK[0]}"
+   "$D_SERIES_PLAYER" "${D_SERIES_PLAYER_ARGS[@]}" "${D_SERIES_CHOICE_STACK[0]}" && {
       if "$D_SERIES_DO_MV"; then
         "$D_SERIES_MV" "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE"
       fi
