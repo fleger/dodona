@@ -32,8 +32,7 @@ dodona.user.series.properUpmix() {
     [[ "$line" =~ $matcher ]] && nbChannels="${BASH_REMATCH[1]}"
   done < <(mplayer -nocache -ao null -vo null -frames 1 -identify "$1")
   case "$nbChannels" in
-    2) D_SERIES_PLAYER_ARGS+=(-ao alsa:device=upmix_20to51);;
-    3) D_SERIES_PLAYER_ARGS+=(-ao alsa:device=upmix_21to51);;
+    2) D_SERIES_PLAYER_ARGS+=(-af surround);;
     *) ;;
   esac
 }
@@ -98,22 +97,23 @@ dodona.user.preFinal() {
   D_SERIES_CHOICE_STACK=("")
   D_SERIES_SCORE_STACK=(1)
 
-  D_SERIES_PLAYER="msubresync"
+  D_SERIES_PLAYER="mplayer"
   D_SERIES_MV="kde-mv"
   D_SERIES_DO_MV=true
-  D_SERIES_PLAYER_ARGS=(play -use-filedir-conf)
+  D_SERIES_PLAYER_ARGS=(-use-filedir-conf -geometry 0:0)
 
   # Parse arguments
   local opt
   local OPTIND=1
   local OPTARG
 
-  while getopts dnwf opt "${dodona_ARGS[@]}"; do
+  while getopts dnwfp opt "${dodona_ARGS[@]}"; do
     case "$opt" in
-      d)  D_SERIES_PLAYER=dodona.user.series.noOp;;
+      d)  D_SERIES_PLAYER=true;;
       n)  D_SERIES_DO_MV=false;;
       w)  D_SERIES_PLAYER_ARGS+=(-aspect 16:9);;
       f)  D_SERIES_PLAYER_ARGS+=(-aspect 4:3);;
+      p)  D_SERIES_PLAYER_ARGS+=(-speed 0.96);;
     esac
   done
 }
@@ -126,9 +126,9 @@ dodona.user.postFinal() {
   if [[ -f "${D_SERIES_CHOICE_STACK[0]}" ]]; then
     echo "Playing ${D_SERIES_CHOICE_STACK[0]} (score: ${D_SERIES_SCORE_STACK[0]})" &&
     #"$D_SERIES_PLAYER" -use-filedir-conf -vf-pre crop=$(dodona.user.series.getCropParam "${D_SERIES_CHOICE_STACK[0]}") "${D_SERIES_CHOICE_STACK[0]}" &&
-   dodona.user.series.properUpmix "${D_SERIES_CHOICE_STACK[0]}"
+   #dodona.user.series.properUpmix "${D_SERIES_CHOICE_STACK[0]}"
    echo "Running $D_SERIES_PLAYER ${D_SERIES_PLAYER_ARGS[@]} ${D_SERIES_CHOICE_STACK[0]}"
-   "$D_SERIES_PLAYER" "${D_SERIES_PLAYER_ARGS[@]}" "${D_SERIES_CHOICE_STACK[0]}" && {
+   nice -n -5 "$D_SERIES_PLAYER" "${D_SERIES_PLAYER_ARGS[@]}" "${D_SERIES_CHOICE_STACK[0]}" && {
       if "$D_SERIES_DO_MV"; then
         "$D_SERIES_MV" "${D_SERIES_CHOICE_STACK[0]%.*}"* "$D_SERIES_ARCHIVE"
       fi
